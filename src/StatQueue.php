@@ -19,17 +19,16 @@ class StatQueue extends Stat
      * 
      * @param $text
      * @param $phone
-     * @param array $attributes [sms_lifetime | sms_sender | info | datetime | lifetime]
+     * @param array $attributes [lifetime | sender | info | datetime]
      * @return $this|\Illuminate\Database\Eloquent\Model
      */
     public function addSmsQueue($text, $phone, $attributes = [])
     {
         $phone = epochta_clear_phone($phone);
-        $lifetime = $attributes['sms_lifetime'] ?? config('epochta-sms.sms_lifetime', 0);
-        $sender = substr($attributes['sms_sender'] ?? config('epochta-sms.sms_sender', 'Sender'), 0, 11);
+        $lifetime = $attributes['lifeime'] ?? config('epochta-sms.sms_lifetime', 0);
+        $sender = substr($attributes['sender'] ?? config('epochta-sms.sender', 'Sender'), 0, 11);
         $info = $attributes['info'] ?? null;
         $datetime = $attributes['datetime'] ?? null;
-        $lifetime = $attributes['lifetime'] ?? 0;
 
         $sms = EpochtaSms::create([
             'sender' => $sender,
