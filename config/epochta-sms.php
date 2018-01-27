@@ -1,39 +1,69 @@
 <?php
 
 return [
-    
+
     /*
+     * Ключи сервиса EPochta
      * https://atomic.center/settings/
      */
+    'test_mode' => env('EPOCHTA_TEST_MODE', false),
+
     'private_key' => env('EPOCHTA_PRIVATE_KEY', ''),
 
     'public_key' => env('EPOCHTA_PUBLIC_KEY', ''),
 
-    
-    'test_mode' => env('EPOCHTA_TEST_MODE', true),
-
     /*
-     * Life time (0 = max, 1, 6, 12, 24 hours)
+     * Время жизни смс на сервисе (0 = max, 1, 6, 12, 24 часов)
      */
     'sms_lifetime' => env('EPOCHTA_SMS_LIFETIME', 0),
 
     /*
-     * Default currency 'USD','GBP','UAH','RUB','EUR'
+     * Валюта 'USD','GBP','UAH','RUB','EUR'
      */
     'currency' => env('EPOCHTA_CURRENCY', 'USD'),
 
     /*
-     * Sender name (max 11 symbols)
+     * Имя отправителя (max 11 символов)
+     * Только если зарегистрировано на сервиси
+     * EPochta, если нет - можно не изменять
      */
     'sender' => env('EPOCHTA_SENDER', 'Sender'),
 
-    /*
-     * Life time sms queue active (hours)
+    /**
+     *
+     * Для ниже приведенных, здесь, настроек, нужно таблица в БД - сделать миграцию.
+     *
      */
-    'lifetime_queue' => 24,
 
     /*
-     * SMS DB table name for queue
+     * Сохранять смс и их статусы в БД
      */
-    'sms_db_table_name' => 'epochta_sms',
+    'use_db' => false,
+
+    /*
+     * Время, после которого считать смс устаревшей, мин.
+     * используется, например, при обновлении статуса в БД
+     */
+    'is_old_after' => 360,
+
+    /**
+     * Настройки для повторных отправок (использует метод smsDbResendUndelivered())
+     * Например, повторно отправлять смс созданные не ранее 4 мин, не позднее 6
+     * + которые еще не имеют повторных отправок
+     */
+    'attempts_transfer' => [
+        'min_minutes' => 4,
+        'max_minutes' => 6,
+    ],
+
+    /*
+     * Сообщения для статусов для метода getGeneralStatus()
+     */
+    'human_statuses' => [
+        0 => 'Ошибка! Сервис Epochta не возвращает ID',
+        1 => 'Доставлено получателю',
+        2 => 'Не доставлено. Получатель не доступен', // и не будет доставелно.
+        3 => 'Отправлено получателю',
+        4 => 'Отправлено на сервис Epochta',
+    ],
 ];

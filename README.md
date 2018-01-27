@@ -1,101 +1,112 @@
 # Laravel Epochta SMS
 
-Package for sending SMS in Laravel. Using service https://www.epochta.ru
+Пакет для отправки СМС с помощью сервиса [epochta](https://www.epochta.ru)
 
-## Installation
-1. Add 
+## Установка
+Запустить 
 ```bash
 composer require "fomvasss/laravel-epochta-sms"
 ```
 ---
-### For Laravel < v5.5 !
+### Для Laravel < v5.5 !
 
-Add the ServiceProvider to the providers array in config/app.php:
+Добавить в ServiceProvider в массив providers (файл config/app.php):
 
 ```php
 Fomvasss\EpochtaService\SmsServiceProvider::class,
 ```
-
-If you like use facades - add next aliase to aliases array
+И для использования фасада, добавить в массив aliases строку:
 
 ```php
 'Sms' => Fomvasss\EpochtaService\Facade::class,
 ```
-
 ---
 
-Publish the config file:
+Публикация конфигарационного файла:
 
 ```bash
-php artisan  vendor:publish --provider="Fomvasss\Epochta\SmsServiceProvider" --tag=config
+php artisan  vendor:publish --provider="Fomvasss\EpochtaService\SmsServiceProvider" --tag=epochta-sms-config
 ```
-
-Publish the migration file:
-
+Если вы планируете сохранять информацию об отправленных СМС а также их статусы, добавьте миграцию:
 ```bash
-php artisan  vendor:publish --provider="Fomvasss\Epochta\SmsServiceProvider" --tag=migrations
+php artisan migrate --path=vendor/fomvasss/laravel-epochta-sms/database/migrations
 ``` 
-
-or one command
-```
-php artisan  vendor:publish --provider="Fomvasss\Epochta\SmsServiceProvider"
-```
-
-and run migration:
-
+а если передумаете, то:
 ```bash
-php artisan migrate
+php artisan migrate:rollback --path=vendor/fomvasss/laravel-epochta-sms/database/migrations
 ```
 
-## Usage
+## Использование
+
+! Исли установлено в конфигу `use_db == true` - следующии методы пишут информацию в таблицу базы данных.
+
+### Использование Sms класс
 
 ```php
-    use Fomvasss\EpochtaService\Facade as Sms;
+<?php
+use Fomvasss\EpochtaService\Sms;
 
-    protected $sms;
-
-    public function __construct(Sms $sms)
-    {
-        $this->sms = $sms;
-    }
-
-    public function run()
-    {
-        $r = $this->sms->account()->getUserBalance();
-        $r = $this->sms->stat()->sendSms('SenderTest', 'test sms text', '380656565656', '2017-10-31 16:08:00', '6');
-        $r = $this->sms->stat()->getCampaignInfo(96972041);
-        
-        /*
-         * sms text
-         * phone number (+ key country)
-         * array $attributes [lifetime | sender | info | datetime]
-         */
-        $r = $this->sms->statQueue()->addSmsQueue('Test SMS serv', '380969416874', ['info' => 'The registration new user'])
-        $r = $this->sms->statQueue()->updateCampaignInfo();
-    }
+class MyClass
+{
+	protected $sms;
+	
+	public function __construct(Sms $sms)
+	{
+		$this->sms = $sms;
+	}
+	
+	public function run()
+	{
+		$r = $this->sms->account()->getUserBalance('RUB'); // получить баланс счета - array['balance_currency', ...]
+		$r = $this->sms->stat()->sendSms('test sms text', '380656565656'); // отправить
+		$r = $this->sms->stat()->sendSms('Text sms', '380656565656', 'Sender-name', '2017-10-31 16:08:00', '6'); // отправить
+		$r = $this->sms->stat()->getCampaignInfo(96972041); // получить инфо об отправке
+		
+		// Need db table
+		$sms = EpochtaSms::find(2);
+		$r = $this->sms->stat()->smsDbResend($sms); // отправить повторно, при этом записать в поле `resend_sms_id` текущей модели, значиние новой `sms_id`
+		$r = $this->sms->stat()->getGeneralStatus($sms); // пулучить статус в виде строки с конфига
+		
+		$r = $this->sms->stat()->smsDbUpdateStatuses(); // обновить все статусы, смс в которых еще нет конечного статуса
+		$r = $this->sms->stat()->smsDbResendUndelivered(5, 10); // отправить повторно все не доставленные, которые не имеют еще повторных отправок
+	}
+}
 ```
 
-You can using the Facade (when added):
-
+### Использование Sms фасада
 ```php
+<?php
     \Sms::account()->getUserBalance();
-    \Sms::stat()->sendSms('SenderTest', 'test sms text', '380656565656', '2017-10-31 16:08:00', '6');
-    \Sms::statQueue()->sendSms('SenderTest2', 'test sms text', '380656565656', '2017-10-31 16:08:00', '6');
-    \Sms::statQueue()->updateCampaignInfo();
+    \Sms::stat()->sendSms('test sms text', '380656565656');
+    \Sms::stat()->sendSms('test sms text', '380656565656', 'SenderTest2', '2017-10-31 16:08:00', '6');
+    \Sms::stat()->getCampaignInfo(96972041);
+    \Sms::stat()->getAllCampaignInfoFromDb();
 ```
 
-For example, add sms-queue to CRON (in Laravel app/Console/Kernel.php method `schedule`):
+Например, вы можете использовать метод для обновления статусов смс `getAllCampaignInfoFromDb()` в CRON задаче (app/Console/Kernel.php):
 
 ```php
+<?php
     $schedule->call(function () {
-        if (env('CRON_SMS')) {
-            \Sms::statQueue()->sendSmsQueue();
-            \Sms::statQueue()->updateCampaignInfoQueue();
+        if (env('SMS_UPDATE_STATUS')) {
+			\Sms::stat()->getAllCampaignInfoFromDb();
         }
     })->cron('* * * * * *');
 ```
 
-### More method and API see in official documentation:
+### Использование событий:
+
+Перед отправкой смс (поля: `attributes` - массив данных смс)
+```
+\Fomvasss\EpochtaService\Events\BeforeSendingSmsEvent
+``` 
+
+После отправки смс (поля: `attributes` - массив данных смс, `sendingResult` - результат отправки, `model` - модель сохраненной смс)
+```
+\Fomvasss\EpochtaService\Events\AfterSendingSmsEvent
+```
+
+## Больше информации и API смотрите в официальной документации:
 
 - https://www.epochta.com.ua/products/sms/v3.php 
 - https://www.epochta.ru/products/sms/php-30-example.php

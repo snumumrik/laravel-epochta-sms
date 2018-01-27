@@ -7,7 +7,7 @@ namespace Fomvasss\EpochtaService;
  *
  * @package \Fomvasss\EpochtaService
  */
-class Account extends Libraries\Account
+class Account extends \Account
 {
 
     use CheckResult;

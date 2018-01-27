@@ -41,9 +41,4 @@ class Sms
     {
         return new Stat($this->gateway);
     }
-
-    public function statQueue()
-    {
-        return new StatQueue($this->gateway);
-    }
 }

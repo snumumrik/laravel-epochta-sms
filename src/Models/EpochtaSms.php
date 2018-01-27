@@ -2,17 +2,24 @@
 
 namespace Fomvasss\EpochtaService\Models;
 
-use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class EpochtaSms extends Model
 {
-    public $guarded = ['id'];
+    protected $table = 'epochta_sms';
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
+    protected $fillable = [
+        'sender',
+        'phone',
+        'body',
+        'datetime',
+        'lifetime',
 
-        $this->setTable(config('epochta-sms.sms_db_table_name', 'epochta_sms'));
-    }
+        'sms_id',
+        'sms_sent_status',
+        'sms_delivered_status',
+        'dispatch_status',
+
+        'resend_sms_id',
+    ];
 }

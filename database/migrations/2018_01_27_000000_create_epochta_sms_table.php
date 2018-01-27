@@ -12,22 +12,17 @@ class CreateEpochtaSmsTable extends Migration
      */
     public function up()
     {
-        $tableName = config('epochta-sms.sms_db_table_name', 'epochta_sms');
-
-        Schema::create($tableName, function (Blueprint $table) {
+        Schema::create('epochta_sms', function (Blueprint $table) {
             $table->increments('id');
             $table->string('sender');
             $table->string('phone');
-            $table->string('text')->nullable();
+            $table->string('body')->nullable();
             $table->string('datetime')->nullable();
             $table->tinyInteger('lifetime')->nullable();
 
-            $table->string('info')->nullable(); // дополнительная инфо, коментарий, тип смс
+            $table->integer('sms_id')->nullable(); // ид смс на сервисе
+            $table->integer('resend_sms_id')->nullable(); // ид смс на сервисе, которая повторно была отправлена для текущей
 
-            $table->integer('transfer_count')->default(0); // количество попыток отправки на сервис
-            $table->tinyInteger('transfer_status')->default(0); // статус отправки на сервис: 0 / 1
-
-            $table->integer('sms_id')->nullable();
             $table->tinyInteger('sms_sent_status')->nullable(); // состояние отправки смс
             $table->tinyInteger('sms_delivered_status')->nullable(); // состояние доставки смс
             $table->tinyInteger('dispatch_status')->nullable(); // состояние рассылки
@@ -43,8 +38,6 @@ class CreateEpochtaSmsTable extends Migration
      */
     public function down()
     {
-        $tableName = config('epochta-sms.sms_db_table_name', 'epochta_sms');
-
-        Schema::drop($tableName);
+        Schema::drop('epochta_sms');
     }
 }
