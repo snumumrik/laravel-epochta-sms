@@ -89,7 +89,7 @@ class MyClass
 <?php
     $schedule->call(function () {
         if (env('SMS_UPDATE_STATUS')) {
-			\Sms::stat()->getAllCampaignInfoFromDb();
+			\Sms::stat()->smsDbUpdateStatuses();
         }
     })->cron('* * * * * *');
 ```
