@@ -14,7 +14,8 @@ class SmsResendUndelivered extends Command
      */
     protected $signature = 'sms:resend-undelivered
             {--min=4 : СМС котории созданы не ранее чем _ мин. назад}
-            {--max=7 : СМС котории созданы не позднее чем _ мин. назад}';
+            {--max=7 : СМС котории созданы не позднее чем _ мин. назад}
+            {--attempt=2 : попыток отправки было меньше или равно 2 раз}';
 
     /**
      * The console command description.
@@ -40,6 +41,6 @@ class SmsResendUndelivered extends Command
      */
     public function handle()
     {
-        Sms::stat()->smsDbResendUndelivered($this->option('min'), $this->option('max'));
+        Sms::stat()->smsDbResendUndelivered($this->option('min'), $this->option('max'), $this->option('attempt'));
     }
 }

@@ -37,22 +37,10 @@ class Stat extends \Stat
             'body' => $body,
             'datetime' => $datetime,
             'lifetime' => $smsLifetime,
+            'attempt' => 1,
         ];
 
-        event(new BeforeSendingSmsEvent($attributes));
-
-        $smsModel = null;
-        if ($useDb = config('epochta-sms.use_db', false)) {
-            $smsModel = $this->smsDbSaveNew($attributes);
-        }
-
-        $result = parent::sendSMS($sender, $body, $phone, $datetime, $smsLifetime);
-
-        event(new AfterSendingSmsEvent($attributes, $result, $smsModel));
-
-        if (!empty($smsModel)) {
-            $this->smsDbUpdateAfterSend($smsModel, $result);
-        }
+        $result = $this->dispatch($attributes);
 
         return $this->checkResult($result) ?? [];
     }
@@ -109,12 +97,12 @@ class Stat extends \Stat
      * @param int|null $isOlderAfter
      * @return bool
      */
-    public function smsDbUpdateStatuses(int $isOlderAfter = null)
+    public function smsDbUpdateStatuses(int $isOlderAfter = 0)
     {
         $isOldAfter = $isOlderAfter ?: config('epochta-sms.is_old_after', 360);
 
         EpochtaSms::whereNotNull('sms_id')
-            ->whereNull('sms_delivered_status')
+            ->where('sms_delivered_status', 0)
             ->where('created_at', '>', \Carbon\Carbon::now()->addHour(-$isOldAfter))
             ->where('updated_at', '<', \Carbon\Carbon::now()->addMinute(-1))
             ->chunk(100, function ($messages) {
@@ -128,21 +116,25 @@ class Stat extends \Stat
 
     /**
      *
-     * Повтороно отправить все смс со статусом "Не доставлено",
+     * Повтороно отправить все смс в которых нет статуса "Доставлено",
      * которые еще не отправлялись повторно
      * котории созданы не позднее чем $maxMinutes мин. назад
-     * и котории созданы не ранее чем $minMinutes мин. назад
+     * котории созданы не ранее чем $minMinutes мин. назад
+     * и которые имеют меньше равно $maxAttempt попыток отправки
      *
      * @param int $minMinutes
      * @param int $maxMinutes
+     * @param int $maxAttempt
      * @return bool
      */
-    public function smsDbResendUndelivered(int $minMinutes = null, int $maxMinutes = null)
+    public function smsDbResendUndelivered(int $minMinutes = 0, int $maxMinutes = 0, int $maxAttempt = 0)
     {
         $minMinutes = $minMinutes ?: config('epochta-sms.attempts_transfer.min_minutes', 4);
         $maxMinutes = $maxMinutes ?: config('epochta-sms.attempts_transfer.max_minutes', 7);
+        $maxAttempt = $maxAttempt ?: config('epochta-sms.attempts_transfer.max_attempt', 2);
 
         EpochtaSms::whereNull('resend_sms_id')
+            ->where('attempt', '<=', $maxAttempt)
             ->where('sms_delivered_status', '<>', 1)
             ->where('created_at', '>', \Carbon\Carbon::now()->addMinute(-$maxMinutes))
             ->where('created_at', '<', \Carbon\Carbon::now()->addMinute(-$minMinutes))
@@ -159,16 +151,23 @@ class Stat extends \Stat
      * Повторно отправить смс - создать новую запись в БД.
      *
      * @param \Fomvasss\EpochtaService\Models\EpochtaSms $sms
-     * @return array|mixed
+     * @return mixed
      */
     public function smsDbResend(EpochtaSms $sms)
     {
-        $result = $this->sendSMS($sms->body, $sms->phone, $sms->sender, $sms->datetime, $sms->smsLifetime);
+        $result = $this->dispatch([
+            'sender' => $sms->sender,
+            'phone' => $sms->phone,
+            'body' => $sms->body,
+            'datetime' => $sms->datetime,
+            'lifetime' => $sms->smsLifetime,
+            'attempt' => ++$sms->attempt,
+        ]);
 
         if (! empty($result['result']['id'])) {
             $sms->resend_sms_id = $result['result']['id'];
-            $sms->save();
         }
+        $sms->save();
 
         return $result;
     }
@@ -196,6 +195,37 @@ class Stat extends \Stat
         return config('epochta-sms.human_statuses')[$stat] ?? 'Error';
     }
 
+    /**
+     * Отправка смс на сервис и сохранение в бд.
+     *
+     * @param $attributes
+     * @return mixed
+     */
+    protected function dispatch($attributes)
+    {
+        event(new BeforeSendingSmsEvent($attributes));
+
+        $smsModel = null;
+        if ($useDb = config('epochta-sms.use_db', false)) {
+            $smsModel = $this->smsDbSaveNew($attributes);
+        }
+
+        $result = parent::sendSMS(
+            $attributes['sender'],
+            $attributes['body'],
+            $attributes['phone'],
+            $attributes['datetime'],
+            $attributes['lifetime']
+        );
+
+        event(new AfterSendingSmsEvent($attributes, $result, $smsModel));
+
+        if (!empty($smsModel)) {
+            $this->smsDbUpdateAfterSend($smsModel, $result);
+        }
+
+        return $result;
+    }
 
     /**
      * Сохранить новую смс.
@@ -219,7 +249,6 @@ class Stat extends \Stat
     {
         if (! empty($sendingResult['result']['id'])) {
             $smsModel->sms_id = $sendingResult['result']['id']; // ид смс на сервисе epochta
-            $smsModel->sms_delivered_status = null;
             $smsModel->save();
         }
 

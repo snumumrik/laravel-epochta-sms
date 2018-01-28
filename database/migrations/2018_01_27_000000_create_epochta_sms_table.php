@@ -20,11 +20,12 @@ class CreateEpochtaSmsTable extends Migration
             $table->string('datetime')->nullable();
             $table->tinyInteger('lifetime')->nullable();
 
+            $table->integer('attempt')->default(1); // попытка №
             $table->integer('sms_id')->nullable(); // ид смс на сервисе
             $table->integer('resend_sms_id')->nullable(); // ид смс на сервисе, которая повторно была отправлена для текущей
 
-            $table->tinyInteger('sms_sent_status')->nullable(); // состояние отправки смс
-            $table->tinyInteger('sms_delivered_status')->nullable(); // состояние доставки смс
+            $table->tinyInteger('sms_sent_status')->default(0); // состояние epochta отправки смс, 1 - отправлено получателю
+            $table->tinyInteger('sms_delivered_status')->default(0); // состояние доставки смс, 1 - доставлено, 2 - не доставлено
             $table->tinyInteger('dispatch_status')->nullable(); // состояние рассылки
 
             $table->timestamps();

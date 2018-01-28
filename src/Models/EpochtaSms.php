@@ -21,5 +21,6 @@ class EpochtaSms extends Model
         'dispatch_status',
 
         'resend_sms_id',
+        'attempt',
     ];
 }
