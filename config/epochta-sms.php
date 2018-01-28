@@ -53,7 +53,7 @@ return [
      */
     'attempts_transfer' => [
         'min_minutes' => 4,
-        'max_minutes' => 6,
+        'max_minutes' => 7,
     ],
 
     /*

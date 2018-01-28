@@ -1,11 +1,13 @@
 <?php
 
-namespace Fomvasss\EpochtaService;
+namespace Fomvasss\EpochtaService\Facade;
 
 /**
- * @see \Spatie\Fractal\Fractal
+ * Class Sms
+ *
+ * @package Fomvasss\EpochtaService
  */
-class Facade extends \Illuminate\Support\Facades\Facade
+class Sms extends \Illuminate\Support\Facades\Facade
 {
     /**
      * Get the registered name of the component.

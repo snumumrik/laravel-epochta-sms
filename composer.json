@@ -9,11 +9,10 @@
             "email": "fomvasss@gmail.com"
         }
     ],
-    "version": "3.3.3",
     "homepage": "https://github.com/fomvasss/laravel-epochta-sms",
     "require": {
         "php": ">=7.0.0",
-        "illuminate/support": "5.2.*|5.3.*|5.4.*|5.5.*",
+        "illuminate/support": "5.4.*|5.5.*",
         "nesbot/carbon": "~1.20"
     },
     "autoload": {
@@ -31,7 +30,7 @@
                 "Fomvasss\\EpochtaService\\SmsServiceProvider"
             ],
             "aliases": {
-                "Sms": "Fomvasss\\EpochtaService\\Facade"
+                "Sms": "Fomvasss\\EpochtaService\\Facade\\Sms"
             }
         }
     }

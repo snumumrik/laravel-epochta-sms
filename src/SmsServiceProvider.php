@@ -16,6 +16,15 @@ class SmsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../config/epochta-sms.php' => config_path('epochta-sms.php')
         ], 'epochta-sms-config');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                Commands\SmsSend::class,
+                Commands\SmsCheckStatus::class,
+                Commands\SmsUpdateStatuses::class,
+                Commands\SmsResendUndelivered::class,
+            ]);
+        }
     }
 
     /**
@@ -31,6 +40,6 @@ class SmsServiceProvider extends ServiceProvider
             return new Sms();
         });
 
-        //$this->app->alias('epochta-sms', EpochtaSms::class);
+        $this->app->alias('Sms', EpochtaSms::class);
     }
 }

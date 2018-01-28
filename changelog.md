@@ -1,5 +1,13 @@
 # История изменений Laravel EpochtaSMS
 
+## 3.1.0 (2018-01-28)
+
+- Добавлены artisan-команды:
+	- sms:send
+	- sms:check
+	- sms:update-statuses
+	- sms:resend-undelivered
+
 ## 3.0.0 (2018-01-27)
 
 - Добавлены:

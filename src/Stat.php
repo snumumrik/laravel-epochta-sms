@@ -106,10 +106,10 @@ class Stat extends \Stat
     /**
      * Получить (и обновить) статусы всех не обновленных (и не старых) смс.
      *
-     * @param null $isOlderAfter
+     * @param int|null $isOlderAfter
      * @return bool
      */
-    public function smsDbUpdateStatuses($isOlderAfter = null)
+    public function smsDbUpdateStatuses(int $isOlderAfter = null)
     {
         $isOldAfter = $isOlderAfter ?: config('epochta-sms.is_old_after', 360);
 
@@ -140,7 +140,7 @@ class Stat extends \Stat
     public function smsDbResendUndelivered(int $minMinutes = null, int $maxMinutes = null)
     {
         $minMinutes = $minMinutes ?: config('epochta-sms.attempts_transfer.min_minutes', 4);
-        $maxMinutes = $maxMinutes ?: config('epochta-sms.attempts_transfer.max_minutes', 6);
+        $maxMinutes = $maxMinutes ?: config('epochta-sms.attempts_transfer.max_minutes', 7);
 
         EpochtaSms::whereNull('resend_sms_id')
             ->where('sms_delivered_status', '<>', 1)
