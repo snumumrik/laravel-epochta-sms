@@ -18,11 +18,11 @@ Fomvasss\EpochtaService\SmsServiceProvider::class,
 И для использования фасада, добавить в массив aliases строку:
 
 ```php
-'Sms' => Fomvasss\EpochtaService\Facade::class,
+'Sms' => Fomvasss\EpochtaService\Facade\Sms::class,
 ```
 ---
 
-Публикация конфигарационного файла:
+Публикация конфигов:
 
 ```bash
 php artisan  vendor:publish --provider="Fomvasss\EpochtaService\SmsServiceProvider" --tag=epochta-sms-config
@@ -68,7 +68,7 @@ class MyClass
 		$r = $this->sms->stat()->getGeneralStatus($sms); // пулучить статус в виде строки с конфига
 		
 		$r = $this->sms->stat()->smsDbUpdateStatuses(); // обновить все статусы, смс в которых еще нет конечного статуса
-		$r = $this->sms->stat()->smsDbResendUndelivered(5, 10); // отправить повторно все не доставленные, которые не имеют еще повторных отправок
+		$r = $this->sms->stat()->smsDbResendUndelivered(5, 10, 3); // отправить повторно все не доставленные
 	}
 }
 ```
@@ -76,11 +76,11 @@ class MyClass
 ### Использование Sms фасада
 ```php
 <?php
-    \Sms::account()->getUserBalance();
-    \Sms::stat()->sendSms('test sms text', '380656565656');
-    \Sms::stat()->sendSms('test sms text', '380656565656', 'SenderTest2', '2017-10-31 16:08:00', '6');
-    \Sms::stat()->getCampaignInfo(96972041);
-    \Sms::stat()->getAllCampaignInfoFromDb();
+    Sms::account()->getUserBalance();
+    Sms::stat()->sendSms('test sms text', '380656565656');
+    Sms::stat()->sendSms('test sms text', '380656565656', 'SenderTest2', '2017-10-31 16:08:00', '6');
+    Sms::stat()->getCampaignInfo(96972041);
+    Sms::stat()->getAllCampaignInfoFromDb();
 ```
 
 Например, вы можете использовать метод для обновления статусов смс `getAllCampaignInfoFromDb()` в CRON задаче (app/Console/Kernel.php):
