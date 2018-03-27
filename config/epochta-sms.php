@@ -67,4 +67,9 @@ return [
         3 => 'Отправлено получателю',
         4 => 'Отправлено на сервис Epochta',
     ],
+
+    'route' => [
+        'rule' => 'route',
+        'type' => env('EPOCHTA_TYPE', 'direct'),
+    ]
 ];

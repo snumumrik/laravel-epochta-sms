@@ -16,10 +16,12 @@ class Sms
         $publicKey = $this->config['public_key'];
         $url = 'https://atompark.com/api/sms/';
         $testMode = $this->config['test_mode'];
+
         $version = '3.0';
         $formatResponse = 'json';
 
-        $this->gateway = new \APISMS($privateKey, $publicKey, $url, $testMode, $version, $formatResponse);
+        $route = $this->config['route'];
+        $this->gateway = new \APISMS($privateKey, $publicKey, $url, $testMode, $version, $formatResponse, $route);
     }
 
     public function addressbook()

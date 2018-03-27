@@ -8,14 +8,16 @@ class APISMS{
 	private $url;
 	private $version;
 	private $testMode;
+	private $route;
 
-	function __construct($privateKey,$publicKey,$url,$testMode=false,$version='3.0',$formatResponse='json'){
+	function __construct($privateKey,$publicKey,$url,$testMode=false,$version='3.0',$formatResponse='json', $route=null){
 		$this->privateKey=$privateKey;
 		$this->publicKey=$publicKey;
 		$this->formatResponse=$formatResponse;
 		$this->url=$url;
 		$this->version=$version;
 		$this->testMode=$testMode;
+		$this->route = $route;
 	}
 
 	public  function execCommad($command,$params,$simple=false){
@@ -23,6 +25,9 @@ class APISMS{
 		if($this->testMode) $params['test']=true;
 		$controlSUM=$this->calcControlSum($params,$command);
 		$params['sum']=$controlSUM;
+
+		if($this->route)
+            $params['sendOption']=json_encode($this->route);
 
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
